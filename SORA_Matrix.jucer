@@ -1,1 +1,76 @@
+<?xml version="1.0" encoding="UTF-8"?>
 
+<JUCERPROJECT id="jucerProject" name="SORA Matrix" projectType="audioplug">
+  <MAINGROUP id="rootGroup" name="SORA Matrix">
+    <GROUP id="sourceGroup" name="Source">
+      <FILE id="Main.cpp" name="Main.cpp" compile="1"/>
+      <FILE id="MainComponent.h" name="MainComponent.h" compile="0"/>
+      <FILE id="MainComponent.cpp" name="MainComponent.cpp" compile="1"/>
+      <GROUP id="audioGroup" name="Audio">
+        <FILE id="AudioEngine.h" name="AudioEngine.h" compile="0"/>
+        <FILE id="AudioEngine.cpp" name="AudioEngine.cpp" compile="1"/>
+        <FILE id="RoutingGraph.h" name="RoutingGraph.h" compile="0"/>
+        <FILE id="RoutingGraph.cpp" name="RoutingGraph.cpp" compile="1"/>
+      </GROUP>
+      <GROUP id="uiGroup" name="UI">
+        <FILE id="MenuBarComponent.h" name="MenuBarComponent.h" compile="0"/>
+        <FILE id="MenuBarComponent.cpp" name="MenuBarComponent.cpp" compile="1"/>
+        <FILE id="RouteMappingComponent.h" name="RouteMappingComponent.h" compile="0"/>
+        <FILE id="RouteMappingComponent.cpp" name="RouteMappingComponent.cpp" compile="1"/>
+      </GROUP>
+      <GROUP id="pluginGroup" name="Plugin">
+        <FILE id="ParametricEQ.h" name="ParametricEQ.h" compile="0"/>
+        <FILE id="ParametricEQ.cpp" name="ParametricEQ.cpp" compile="1"/>
+      </GROUP>
+      <GROUP id="settingsGroup" name="Settings">
+        <FILE id="AppConfig.h" name="AppConfig.h" compile="0"/>
+        <FILE id="AppConfig.cpp" name="AppConfig.cpp" compile="1"/>
+      </GROUP>
+    </GROUP>
+    <GROUP id="resourcesGroup" name="Resources">
+      <FILE id="AppIcon.icns" name="AppIcon.icns" compile="0" resource="1"/>
+      <FILE id="IconTemplate.png" name="IconTemplate.png" compile="0" resource="1"/>
+    </GROUP>
+  </MAINGROUP>
+
+  <EXPORTFORMATS>
+    <XCODE_MAC targetFolder="Builds/MacOSX" name="Xcode (MacOSX)">
+      <CONFIGURATIONS>
+        <CONFIGURATION name="Debug" isDebug="1" optimisation="0"/>
+        <CONFIGURATION name="Release" isDebug="0" optimisation="2"/>
+      </CONFIGURATIONS>
+    </XCODE_MAC>
+  </EXPORTFORMATS>
+
+  <MODULES>
+    <MODULE id="juce_core"/>
+    <MODULE id="juce_audio_basics"/>
+    <MODULE id="juce_audio_devices"/>
+    <MODULE id="juce_audio_formats"/>
+    <MODULE id="juce_audio_processors"/>
+    <MODULE id="juce_gui_basics"/>
+    <MODULE id="juce_graphics"/>
+    <MODULE id="juce_data_structures"/>
+  </MODULES>
+
+  <JUCEOPTIONS JUCE_STRICT_REFCOUNTEDPOINTER="1"
+               JUCE_VST3_CAN_REPLACE_VST2="0"/>
+
+  <LIVE_SETTINGS>
+    <OSX_BUNDLE_IDENTIFIER value="com.github.BadakCulaSatu.soramatrix"/>
+    <OSX_BUNDLE_NAME value="SORA Matrix"/>
+    <OSX_BUNDLE_VERSION value="0.1.0"/>
+    <OSX_MINIMUM_SDK value="11.0"/>
+    <PLUGIN_MANUFACTURER_CODE value="SoMa"/>
+    <PLUGIN_CODE value="SoMx"/>
+    <PLUGIN_NAME value="SORA Matrix"/>
+    <PLUGIN_DESCRIPTION value="Audio Router & Matrix Mixer"/>
+    <PLUGIN_AU_EXPORT_PREFIX value="SORAMatrix"/>
+    <PLUGIN_MANUFACTURER value="YourName"/>
+    <PLUGIN_VERSION value="0.1.0"/>
+    <PLUGIN_IS_AU_SANDBOX_SAFE value="0"/>
+    <PLUGIN_IS_SYNTH value="0"/>
+    <PLUGIN_WANTS_MIDI_INPUT value="0"/>
+    <PLUGIN_WANTS_MIDI_OUTPUT value="0"/>
+  </LIVE_SETTINGS>
+</JUCERPROJECT>
