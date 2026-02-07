@@ -1,35 +1,77 @@
 #pragma once
+
 #include <JuceHeader.h>
 
-class ParametricEQ
+class ParametricEQ : public juce::AudioProcessor
 {
 public:
+    struct EQBand
+    {
+        enum Type { PEAK, HPF, LPF };
+        
+        Type type = PEAK;
+        float frequency = 1000.0f;
+        float gain = 0.0f;
+        float q = 1.0f;
+        int slope = 12; // For HPF/LPF: 6, 12, 24, 48 dB/oct
+        
+        bool isBypassed = false;
+        juce::Point<float> nodePosition; // For visual editor
+        
+        bool operator==(const EQBand& other) const
+        {
+            return type == other.type &&
+                   frequency == other.frequency &&
+                   gain == other.gain &&
+                   q == other.q &&
+                   slope == other.slope;
+        }
+    };
+    
     ParametricEQ();
-    ~ParametricEQ() = default;
-
-    void prepare(const juce::dsp::ProcessSpec& spec);
-    void process(juce::AudioBuffer<float>& buffer);
-    void reset();
-
-    // Band management
-    void setBandParameters(size_t index, float freq, float gain, float q);
-    std::array<std::atomic<float>, 16>& getGains() { return bandGains; }
-    std::array<std::atomic<float>, 16>& getFreqs() { return bandFreqs; }
-    std::array<std::atomic<float>, 16>& getQs() { return bandQs; }
-
-    // Preset management
-    void savePreset(const juce::String& name);
-    void loadPreset(const juce::String& name);
-    juce::StringArray getPresetList();
-
+    ~ParametricEQ() override;
+    
+    // AudioProcessor overrides
+    void prepareToPlay(double sampleRate, int samplesPerBlock) override;
+    void releaseResources() override;
+    void processBlock(juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages) override;
+    
+    const juce::String getName() const override { return "ParametricEQ"; }
+    bool acceptsMidi() const override { return false; }
+    bool producesMidi() const override { return false; }
+    double getTailLengthSeconds() const override { return 0.0; }
+    
+    int getNumPrograms() override { return 1; }
+    int getCurrentProgram() override { return 0; }
+    void setCurrentProgram(int index) override {}
+    const juce::String getProgramName(int index) override { return {}; }
+    void changeProgramName(int index, const juce::String& newName) override {}
+    
+    juce::AudioProcessorEditor* createEditor() override;
+    bool hasEditor() const override { return true; }
+    
+    void getStateInformation(juce::MemoryBlock& destData) override;
+    void setStateInformation(const void* data, int sizeInBytes) override;
+    
+    // EQ-specific methods
+    void addBand(const EQBand& band);
+    void removeBand(int index);
+    void updateBand(int index, const EQBand& band);
+    const juce::Array<EQBand>& getBands() const { return bands; }
+    void clearBands() { bands.clear(); updateFilters(); }
+    
+    void loadPreset(const juce::String& presetName);
+    void savePreset(const juce::String& presetName);
+    juce::StringArray getPresetList() const;
+    
 private:
-    std::array<juce::dsp::IIR::Filter<float>, 16> filters;
-    std::array<std::atomic<float>, 16> bandGains;
-    std::array<std::atomic<float>, 16> bandFreqs;
-    std::array<std::atomic<float>, 16> bandQs;
-    juce::dsp::ProcessSpec currentSpec;
-    juce::File presetDir;
-
-    void updateBand(size_t index);
-    juce::File getPresetFile(const juce::String& name);
+    void updateFilters();
+    
+    juce::Array<EQBand> bands;
+    juce::OwnedArray<juce::IIRFilter> filters;
+    double currentSampleRate = 44100.0;
+    
+    juce::CriticalSection lock;
+    
+    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(ParametricEQ)
 };
