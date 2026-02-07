@@ -1,33 +1,60 @@
 #pragma once
+
 #include <JuceHeader.h>
 #include "ParametricEQ.h"
 
 class EQEditor16Band : public juce::Component,
-                       public juce::Slider::Listener,
-                       public juce::ComboBox::Listener,
-                       public juce::Button::Listener
+                       public juce::ChangeListener
 {
 public:
-    EQEditor16Band(ParametricEQ& eq);
+    EQEditor16Band(ParametricEQ& eqProcessor);
+    ~EQEditor16Band() override;
+    
+    void paint(juce::Graphics& g) override;
     void resized() override;
+    void mouseDown(const juce::MouseEvent& event) override;
+    void mouseDoubleClick(const juce::MouseEvent& event) override;
+    
+    // ChangeListener
+    void changeListenerCallback(juce::ChangeBroadcaster* source) override;
     
 private:
-    void sliderValueChanged(juce::Slider* slider) override;
-    void comboBoxChanged(juce::ComboBox* comboBox) override;
-    void buttonClicked(juce::Button* button) override;
+    struct BandControl : public juce::Component
+    {
+        BandControl(int index, ParametricEQ& eq);
+        ~BandControl() override;
+        
+        void paint(juce::Graphics& g) override;
+        void resized() override;
+        
+        void updateFromBand();
+        
+        int bandIndex;
+        ParametricEQ& eqProcessor;
+        
+        std::unique_ptr<juce::ComboBox> typeCombo;
+        std::unique_ptr<juce::Slider> freqSlider;
+        std::unique_ptr<juce::Slider> gainSlider;
+        std::unique_ptr<juce::Slider> qSlider;
+        std::unique_ptr<juce::ComboBox> slopeCombo;
+        std::unique_ptr<juce::TextButton> deleteButton;
+        
+        juce::Label freqLabel, gainLabel, qLabel, slopeLabel;
+        
+        JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(BandControl)
+    };
     
-    ParametricEQ& eqRef;
+    void addBandAtPoint(juce::Point<float> position);
+    void deleteBand(int index);
+    void updateBandControls();
     
-    juce::TabbedComponent tabbedComponent;
-    juce::OwnedArray<juce::Component> bandTabs;
+    ParametricEQ& eqProcessor;
+    juce::OwnedArray<BandControl> bandControls;
+    juce::Viewport viewport;
+    juce::Component bandsContainer;
     
-    juce::ComboBox presetCombo;
-    juce::TextButton loadButton, saveButton, deleteButton;
-    juce::TextEditor presetNameEditor;
+    juce::Path frequencyResponsePath;
+    juce::Array<juce::Point<float>> nodePositions;
     
-    void createBandTab(int bandIndex);
-    void updatePresetList();
-    void saveCurrentPreset();
-    void loadSelectedPreset();
-    void deleteSelectedPreset();
+    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(EQEditor16Band)
 };
