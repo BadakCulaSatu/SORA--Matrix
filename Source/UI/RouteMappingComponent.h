@@ -1,50 +1,41 @@
 #pragma once
+
 #include <JuceHeader.h>
 #include "ParametricEQ.h"
 #include "EQEditor16Band.h"
 
-class RouteMappingComponent : public juce::Component,
-                              public juce::ComboBox::Listener,
-                              public juce::Slider::Listener,
-                              public juce::Button::Listener
+class RouteMappingComponent : public juce::Component
 {
 public:
-    RouteMappingComponent(int mappingId);
-    ~RouteMappingComponent();
+    RouteMappingComponent(const juce::String& mappingName);
+    ~RouteMappingComponent() override;
     
+    void paint(juce::Graphics& g) override;
     void resized() override;
     
-    // Getters
-    juce::String getInputDevice() const;
-    juce::String getOutputDevice() const;
-    bool isMuted() const;
-    float getVolume() const;
-    ParametricEQ& getEQ() { return eqProcessor; }
+    void setInputDevice(const juce::String& deviceName);
+    void setOutputDevice(const juce::String& deviceName);
+    
+    juce::String getMappingName() const { return mappingName; }
+    bool isMuted() const { return isMute; }
+    float getVolume() const { return volume; }
     
 private:
-    void comboBoxChanged(juce::ComboBox* comboBox) override;
-    void sliderValueChanged(juce::Slider* slider) override;
-    void buttonClicked(juce::Button* button) override;
+    void showEQEditor();
     
-    int mappingIndex;
-    ParametricEQ eqProcessor;
+    juce::String mappingName;
     
-    // UI Components
-    juce::Label mappingLabel;
+    std::unique_ptr<juce::ComboBox> inputDeviceCombo;
+    std::unique_ptr<juce::ComboBox> outputDeviceCombo;
+    std::unique_ptr<juce::ToggleButton> muteButton;
+    std::unique_ptr<juce::TextButton> eqButton;
+    std::unique_ptr<juce::Slider> volumeSlider;
     
-    juce::ComboBox inputDeviceCombo;
-    juce::ComboBox outputDeviceCombo;
+    std::unique_ptr<ParametricEQ> eqProcessor;
+    std::unique_ptr<EQEditor16Band> eqEditor;
     
-    juce::TextButton muteButton;
-    juce::TextButton eqButton;
-    juce::Slider volumeSlider;
+    bool isMute = false;
+    float volume = 1.0f;
     
-    juce::Label inputLabel;
-    juce::Label outputLabel;
-    juce::Label volumeLabel;
-    
-    bool muted = false;
-    
-    void updateMuteButton();
-    void populateDeviceLists();
+    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(RouteMappingComponent)
 };
