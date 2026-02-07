@@ -1,32 +1,50 @@
 #pragma once
 #include <JuceHeader.h>
+#include "ParametricEQ.h"
+#include "EQEditor16Band.h"
 
-class RouteMappingComponent : public Component,
-                              private ComboBox::Listener,
-                              private Slider::Listener,
-                              private Button::Listener
+class RouteMappingComponent : public juce::Component,
+                              public juce::ComboBox::Listener,
+                              public juce::Slider::Listener,
+                              public juce::Button::Listener
 {
 public:
     RouteMappingComponent(int mappingId);
-    ~RouteMappingComponent() override;
-
-    void paint(Graphics& g) override;
-    void resized() override;
-
-private:
-    void comboBoxChanged(ComboBox* comboBox) override;
-    void sliderValueChanged(Slider* slider) override;
-    void buttonClicked(Button* button) override;
-    void updateDeviceLists();
-
-    int mappingId;
+    ~RouteMappingComponent();
     
-    Label mappingLabel;
-    ComboBox inputDeviceCombo;
-    ComboBox outputDeviceCombo;
-    TextButton muteButton { "MUTE" };
-    TextButton eqButton { "EQ" };
-    Slider volumeSlider;
-
-    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(RouteMappingComponent)
+    void resized() override;
+    
+    // Getters
+    juce::String getInputDevice() const;
+    juce::String getOutputDevice() const;
+    bool isMuted() const;
+    float getVolume() const;
+    ParametricEQ& getEQ() { return eqProcessor; }
+    
+private:
+    void comboBoxChanged(juce::ComboBox* comboBox) override;
+    void sliderValueChanged(juce::Slider* slider) override;
+    void buttonClicked(juce::Button* button) override;
+    
+    int mappingIndex;
+    ParametricEQ eqProcessor;
+    
+    // UI Components
+    juce::Label mappingLabel;
+    
+    juce::ComboBox inputDeviceCombo;
+    juce::ComboBox outputDeviceCombo;
+    
+    juce::TextButton muteButton;
+    juce::TextButton eqButton;
+    juce::Slider volumeSlider;
+    
+    juce::Label inputLabel;
+    juce::Label outputLabel;
+    juce::Label volumeLabel;
+    
+    bool muted = false;
+    
+    void updateMuteButton();
+    void populateDeviceLists();
 };
