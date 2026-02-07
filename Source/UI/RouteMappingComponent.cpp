@@ -1,105 +1,196 @@
 #include "RouteMappingComponent.h"
-#include "../Audio/AudioEngine.h"
 
-RouteMappingComponent::RouteMappingComponent(int id) : mappingId(id)
+RouteMappingComponent::RouteMappingComponent(int mappingId)
+    : mappingIndex(mappingId)
 {
-    mappingLabel.setText("Mapping #" + String(static_cast<char>('A' + id)), 
-                         dontSendNotification);
+    // Label Mapping
+    mappingLabel.setText("Mapping #" + juce::String(char('A' + mappingId)), 
+                        juce::dontSendNotification);
+    mappingLabel.setJustificationType(juce::Justification::centred);
     addAndMakeVisible(mappingLabel);
     
-    addAndMakeVisible(inputDeviceCombo);
+    // Input Device
+    inputLabel.setText("Input:", juce::dontSendNotification);
+    addAndMakeVisible(inputLabel);
+    
     inputDeviceCombo.addListener(this);
+    addAndMakeVisible(inputDeviceCombo);
     
-    addAndMakeVisible(outputDeviceCombo);
+    // Output Device
+    outputLabel.setText("Output:", juce::dontSendNotification);
+    addAndMakeVisible(outputLabel);
+    
     outputDeviceCombo.addListener(this);
+    addAndMakeVisible(outputDeviceCombo);
     
-    addAndMakeVisible(muteButton);
-    muteButton.addListener(this);
+    // Mute Button
+    muteButton.setButtonText("MUTE");
     muteButton.setClickingTogglesState(true);
+    muteButton.addListener(this);
+    addAndMakeVisible(muteButton);
     
-    addAndMakeVisible(eqButton);
+    // EQ Button
+    eqButton.setButtonText("EQ");
     eqButton.addListener(this);
+    addAndMakeVisible(eqButton);
     
-    addAndMakeVisible(volumeSlider);
-    volumeSlider.setRange(0.0, 100.0, 0.1);
+    // Volume Slider
+    volumeLabel.setText("Vol:", juce::dontSendNotification);
+    addAndMakeVisible(volumeLabel);
+    
+    volumeSlider.setRange(0.0, 100.0, 1.0);
+    volumeSlider.setTextBoxStyle(juce::Slider::TextBoxRight, false, 50, 20);
     volumeSlider.setValue(100.0);
     volumeSlider.addListener(this);
-    volumeSlider.setTextBoxStyle(Slider::TextBoxRight, false, 60, 20);
+    addAndMakeVisible(volumeSlider);
     
-    updateDeviceLists();
+    // Populate device lists
+    populateDeviceLists();
+    
+    setSize(800, 60);
 }
 
 RouteMappingComponent::~RouteMappingComponent() {}
 
-void RouteMappingComponent::paint(Graphics& g)
-{
-    g.setColour(Colours::grey.withAlpha(0.3f));
-    g.fillRoundedRectangle(getLocalBounds().toFloat(), 6.0f);
-    g.setColour(Colours::white.withAlpha(0.1f));
-    g.drawRoundedRectangle(getLocalBounds().toFloat(), 6.0f, 1.0f);
-}
-
 void RouteMappingComponent::resized()
 {
-    auto bounds = getLocalBounds().reduced(10);
-    auto topRow = bounds.removeFromTop(30);
+    auto bounds = getLocalBounds().reduced(5);
     
-    mappingLabel.setBounds(topRow.removeFromLeft(100));
-    inputDeviceCombo.setBounds(topRow.removeFromLeft(200));
-    outputDeviceCombo.setBounds(topRow.removeFromLeft(200));
+    // Mapping Label (kiri)
+    mappingLabel.setBounds(bounds.removeFromLeft(100));
     
-    auto bottomRow = bounds.removeFromTop(30);
-    muteButton.setBounds(bottomRow.removeFromLeft(80));
-    eqButton.setBounds(bottomRow.removeFromLeft(80));
-    volumeSlider.setBounds(bottomRow);
+    // Input Device
+    inputLabel.setBounds(bounds.removeFromLeft(50));
+    inputDeviceCombo.setBounds(bounds.removeFromLeft(150));
+    bounds.removeFromLeft(10);
+    
+    // Output Device
+    outputLabel.setBounds(bounds.removeFromLeft(60));
+    outputDeviceCombo.setBounds(bounds.removeFromLeft(150));
+    bounds.removeFromLeft(10);
+    
+    // Mute Button
+    muteButton.setBounds(bounds.removeFromLeft(80));
+    bounds.removeFromLeft(10);
+    
+    // EQ Button
+    eqButton.setBounds(bounds.removeFromLeft(80));
+    bounds.removeFromLeft(10);
+    
+    // Volume
+    volumeLabel.setBounds(bounds.removeFromLeft(40));
+    volumeSlider.setBounds(bounds.removeFromLeft(150));
 }
 
-void RouteMappingComponent::comboBoxChanged(ComboBox* comboBox)
-{
-    if (comboBox == &inputDeviceCombo)
-    {
-        AudioEngine::getInstance()->setInputDevice(mappingId, 
-            comboBox->getText());
-    }
-    else if (comboBox == &outputDeviceCombo)
-    {
-        AudioEngine::getInstance()->setOutputDevice(mappingId, 
-            comboBox->getText());
-    }
-}
-
-void RouteMappingComponent::sliderValueChanged(Slider* slider)
-{
-    if (slider == &volumeSlider)
-    {
-        AudioEngine::getInstance()->setVolume(mappingId, 
-            (float)slider->getValue());
-    }
-}
-
-void RouteMappingComponent::buttonClicked(Button* button)
-{
-    if (button == &muteButton)
-    {
-        AudioEngine::getInstance()->setMute(mappingId, 
-            button->getToggleState());
-    }
-    else if (button == &eqButton)
-    {
-        // TODO: Buka window EQ
-    }
-}
-
-void RouteMappingComponent::updateDeviceLists()
+void RouteMappingComponent::populateDeviceLists()
 {
     inputDeviceCombo.clear();
     outputDeviceCombo.clear();
     
-    auto inputs = AudioEngine::getInstance()->getInputDevices();
-    for (const auto& device : inputs)
-        inputDeviceCombo.addItem(device, inputDeviceCombo.getNumItems() + 1);
+    // Tambah default option
+    inputDeviceCombo.addItem("System Audio", 1);
+    inputDeviceCombo.addItem("Blackhole 2ch", 2);
     
-    auto outputs = AudioEngine::getInstance()->getOutputDevices();
-    for (const auto& device : outputs)
-        outputDeviceCombo.addItem(device, outputDeviceCombo.getNumItems() + 1);
+    // Ambil device audio dari system
+    auto deviceManager = juce::AudioDeviceManager();
+    deviceManager.initialise(0, 2, nullptr, true);
+    
+    auto deviceTypes = deviceManager.getAvailableDeviceTypes();
+    for (auto* type : deviceTypes)
+    {
+        type->scanForDevices();
+        auto inputNames = type->getDeviceNames(true);  // Input devices
+        auto outputNames = type->getDeviceNames(false); // Output devices
+        
+        for (const auto& name : inputNames)
+            inputDeviceCombo.addItem(name, inputDeviceCombo.getNumItems() + 100);
+        
+        for (const auto& name : outputNames)
+            outputDeviceCombo.addItem(name, outputDeviceCombo.getNumItems() + 200);
+    }
+    
+    // Set default selection
+    if (inputDeviceCombo.getNumItems() > 0)
+        inputDeviceCombo.setSelectedItemIndex(0);
+    if (outputDeviceCombo.getNumItems() > 0)
+        outputDeviceCombo.setSelectedItemIndex(0);
+}
+
+void RouteMappingComponent::comboBoxChanged(juce::ComboBox* comboBox)
+{
+    // Handle device selection changes
+    if (comboBox == &inputDeviceCombo)
+    {
+        // Update audio routing
+    }
+    else if (comboBox == &outputDeviceCombo)
+    {
+        // Update audio routing
+    }
+}
+
+void RouteMappingComponent::sliderValueChanged(juce::Slider* slider)
+{
+    if (slider == &volumeSlider)
+    {
+        // Apply volume gain
+        float volume = (float)volumeSlider.getValue() / 100.0f;
+        // Apply to audio routing
+    }
+}
+
+void RouteMappingComponent::buttonClicked(juce::Button* button)
+{
+    if (button == &muteButton)
+    {
+        muted = muteButton.getToggleState();
+        updateMuteButton();
+        // Apply mute to audio routing
+    }
+    else if (button == &eqButton)
+    {
+        // Open EQ Editor
+        auto* editor = new EQEditor16Band(eqProcessor);
+        
+        juce::DialogWindow::LaunchOptions options;
+        options.content.setOwned(editor);
+        options.dialogTitle = "EQ - Mapping #" + juce::String(char('A' + mappingIndex));
+        options.escapeKeyTriggersCloseButton = true;
+        options.useNativeTitleBar = true;
+        options.resizable = true;
+        
+        auto* window = options.launchAsync();
+        if (window) 
+        {
+            window->centreWithSize(600, 500);
+            window->toFront(true);
+        }
+    }
+}
+
+void RouteMappingComponent::updateMuteButton()
+{
+    muteButton.setButtonText(muted ? "UNMUTE" : "MUTE");
+    muteButton.setColour(juce::TextButton::buttonColourId, 
+                        muted ? juce::Colours::red : juce::Colours::grey);
+}
+
+juce::String RouteMappingComponent::getInputDevice() const
+{
+    return inputDeviceCombo.getText();
+}
+
+juce::String RouteMappingComponent::getOutputDevice() const
+{
+    return outputDeviceCombo.getText();
+}
+
+bool RouteMappingComponent::isMuted() const
+{
+    return muted;
+}
+
+float RouteMappingComponent::getVolume() const
+{
+    return (float)volumeSlider.getValue() / 100.0f;
 }
